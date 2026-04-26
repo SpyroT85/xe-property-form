@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAreaSearch } from '../hooks/useAreaSearch';
 import type { AreaSuggestion } from '../types';
 
@@ -12,12 +12,12 @@ export function AreaAutocomplete({ value, onSelect, error }: AreaAutocompletePro
   const [input, setInput] = useState(value);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  // Once the user picks something we stop searching until they edit the field again
   const [isSelected, setIsSelected] = useState(false);
-  const listRef = useRef<HTMLUListElement>(null);
 
+  // skip searching once the user has picked something
   const { suggestions, isLoading, error: fetchError } = useAreaSearch(isSelected ? '' : input);
 
+  // reset the dropdown whenever suggestions change
   useEffect(() => {
     setIsOpen(suggestions.length > 0);
     setActiveIndex(-1);
@@ -30,6 +30,7 @@ export function AreaAutocomplete({ value, onSelect, error }: AreaAutocompletePro
     onSelect(suggestion);
   };
 
+  // keyboard navigation through the suggestions list
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (!isOpen) return;
 
@@ -55,6 +56,7 @@ export function AreaAutocomplete({ value, onSelect, error }: AreaAutocompletePro
         onChange={e => {
           setInput(e.target.value);
           setIsSelected(false);
+          // clear the parent's stored place id if the field was previously filled
           if (value) onSelect({ placeId: '', mainText: '', secondaryText: '' });
         }}
         onKeyDown={handleKeyDown}
@@ -72,7 +74,6 @@ export function AreaAutocomplete({ value, onSelect, error }: AreaAutocompletePro
 
       {isOpen && (
         <ul
-          ref={listRef}
           id="area-suggestions"
           role="listbox"
           className="autocomplete-list"
@@ -84,6 +85,7 @@ export function AreaAutocomplete({ value, onSelect, error }: AreaAutocompletePro
               role="option"
               aria-selected={index === activeIndex}
               className={`autocomplete-item ${index === activeIndex ? 'autocomplete-item--active' : ''}`}
+              // mousedown fires before blur so the click registers before the list closes
               onMouseDown={() => handleSelect(suggestion)}
             >
               <span className="autocomplete-main">{suggestion.mainText}</span>
